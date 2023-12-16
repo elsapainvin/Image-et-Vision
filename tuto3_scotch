@@ -1,0 +1,58 @@
+%=========================================================================
+%                       Détection de formes dans des contours
+%=========================================================================
+close all;
+clear all;
+
+% On reprend le minimum du tutorial2
+% -> "IbwEdge" : image binaire des contours
+% (Le code pour générer IbwEdge devrait être inclus ici)
+
+% Calcul de la Transformée de Hough pour détecter les cercles
+% Un cercle est caractérisé par son rayon, ainsi que par les coordonnées de
+% son centre (3 inconnues). Pour se ramener à un accumulateur à deux
+% dimensions, on impose le rayon "R" et on recherche les coordonnées "x0" et "y0" du centre
+% des cercles candidats constitués d'au minimum "nbMinPts" pixels.
+R = 55;
+nbMinPts = 50;
+
+[y0, x0, Accumulateur] = houghcircle(IbwEdge, R, nbMinPts);
+
+theta = 0:0.01:2*pi;
+figure; % Crée une nouvelle figure
+hold on; % Maintient la figure pour le tracé de plusieurs cercles
+for i = 1:size(x0,1)
+    plot(x0(i), y0(i), 'r+'); % Marque le centre
+    text(x0(i), y0(i), [' ' num2str(Accumulateur(y0(i), x0(i)))], ...
+        'color', 'r'); % Affiche le nombre de votes
+    
+    Xfit = R*cos(theta) + x0(i); % Calcule les coordonnées x du cercle
+    Yfit = R*sin(theta) + y0(i); % Calcule les coordonnées y du cercle
+    plot(Xfit, Yfit, 'r'); % Dessine le cercle
+end
+hold off;
+title(['Rayon = ' num2str(R)]);
+
+% La même chose en parcourant itérativement tous les rayons de 100 à 20 pixels.
+% On sélectionnera et affichera pour chaque rayon LE centre ayant le plus grand nombre
+% de votes (minimum 20% du périmètre du cercle théorique)
+for R = 100:-1:20
+    [y0, x0, Accumulateur] = houghcircle(IbwEdge, R, nbMinPts);
+    maxVotes = max(Accumulateur(:));
+    [y0_max, x0_max] = find(Accumulateur == maxVotes);
+    
+    % Condition pour vérifier si le nombre de votes est supérieur à 20% du périmètre
+    if maxVotes >= (0.2 * 2 * pi * R)
+        Xfit = R*cos(theta) + x0_max; % Calcule les coordonnées x du cercle avec le plus de votes
+        Yfit = R*sin(theta) + y0_max; % Calcule les coordonnées y du cercle avec le plus de votes
+        figure; % Crée une nouvelle figure pour chaque rayon
+        imshow(IbwEdge); % Affiche l'image des contours
+        hold on;
+        plot(Xfit, Yfit, 'g'); % Dessine le cercle avec le plus de votes
+        plot(x0_max, y0_max, 'g+'); % Marque le centre
+        hold off;
+        title(['Rayon = ' num2str(R) ' avec ' num2str(maxVotes) ' votes']);
+    end
+end
+
+warning('on','Images:imshow:magnificationMustBeFitForDockedFigure');
