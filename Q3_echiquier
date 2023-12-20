@@ -1,0 +1,41 @@
+function detected_points = detect_and_display_chessboard_corners(image_path, minN, maxN, scale)
+    % Lecture de l'image
+    RGBInit = imread(image_path);
+    
+    % Réduction de la taille de l'image si nécessaire
+    if nargin < 4 || isempty(scale)
+        scale = 1.0; % Ajuster selon les besoins
+    end
+    RGB = imresize(RGBInit, scale, 'cubic');
+    
+    % Conversion de l'image en niveaux de gris
+    Igray = rgb2gray(RGB);
+    
+    % Détecteur de coins de Harris
+    detected_points = harris(Igray, minN, maxN);
+    
+    % Affichage de l'image et des points détectés
+    affiche(RGB, detected_points);
+end
+
+function affiche(Irgb, P)
+    % Affichage de l'image
+    figure;
+    imshow(Irgb);
+    hold on;
+    
+    % Affichage des points détectés
+    for i = 1:size(P, 1)
+        plot(P(i, 2), P(i, 1), 'r+'); % Les points sont en rouge avec un signe plus
+    end
+    
+    hold off;
+end
+
+% La fonction harris doit être définie ailleurs avec le prototype spécifié
+% function P = harris(I, minN, maxN)
+% ...
+% end
+
+% Utilisation de la fonction
+detected_points = detect_and_display_chessboard_corners('p1.jpg', 25, 1000, 0.4);
